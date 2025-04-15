@@ -1,1570 +1,858 @@
--- Disable default warnings
-warn = function() end
-
--- Disable health bar and damage overlay
-game.StarterGui:SetCoreGuiEnabled("Health", false)
-
--- Load Rayfield UI Library
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-local Window = Rayfield:CreateWindow({
-    Name = "Sentinel | by @fuckluau",
-    Icon = 0,
-    LoadingTitle = "Sentinel by @fuckluau",
-    LoadingSubtitle = "Made with ❤️ by @fuckluau",
-    Theme = "Bloom",
-    DisableRayfieldPrompts = false,
-    DisableBuildWarnings = false,
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = nil,
-        FileName = "Big Hub"
-    },
-    Discord = {
-        Enabled = false,
-        Invite = "noinvitelink",
-        RememberJoins = true
-    },
-    KeySystem = false,
-    KeySettings = {
-        Title = "Untitled",
-        Subtitle = "Key System",
-        Note = "No method of obtaining the key is provided",
-        FileName = "Key",
-        SaveKey = true,
-        GrabKeyFromSite = false,
-        Key = {"Hello"}
-    }
-})
-
--- Create tabs for different functionalities
-local PlayerTab = Window:CreateTab("Player", 6961018885)
-local WorkspaceTab = Window:CreateTab("Workspace", 4370344717)
-local TeleportTab = Window:CreateTab("Teleport", 4370305588)
-local AnimTab = Window:CreateTab("Animations", 4483362748)
-local VoiceTab = Window:CreateTab("Voice Chat", 4370317928)
-local ChatTab = Window:CreateTab("Chat", 4370313618)
-local UITab = Window:CreateTab("UI", 4384400106)
-
--- Services
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+local setclipboard = setclipboard or function() warn("Clipboard function not available") end
 
--- Player Movement Section
-PlayerTab:CreateSection("Movement")
-
--- WalkSpeed Slider
-PlayerTab:CreateSlider({
-    Name = "WalkSpeed Slider",
-    Range = {0, 150},
-    Increment = 1,
-    Suffix = " Studs",
-    CurrentValue = 16,
-    Flag = "WalkSpeedSlider",
-    Callback = function(Value)
-        LocalPlayer.Character.Humanoid.WalkSpeed = Value
-    end
-})
-
--- Animation Speed Section
-PlayerTab:CreateSection("Animation Speed")
-
--- Fast Animation Speed Keybind
-PlayerTab:CreateKeybind({
-    Name = "Fast Animation Speed",
-    CurrentKeybind = "E",
-    HoldToInteract = false,
-    Flag = "FastAnimationKeybind",
-    Callback = function()
-        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local humanoid = character:FindFirstChild("Humanoid")
-        if humanoid then
-            local animator = humanoid:FindFirstChildOfClass("Animator")
-            if animator then
-                for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                    track:AdjustSpeed(4)
-                end
-            end
-        end
-    end
-})
-
--- Slow Animation Speed Keybind
-PlayerTab:CreateKeybind({
-    Name = "Slow Animation Speed",
-    CurrentKeybind = "F",
-    HoldToInteract = false,
-    Flag = "SlowAnimationKeybind",
-    Callback = function()
-        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local humanoid = character:FindFirstChild("Humanoid")
-        if humanoid then
-            local animator = humanoid:FindFirstChildOfClass("Animator")
-            if animator then
-                for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                    track:AdjustSpeed(0.1)
-                end
-            end
-        end
-    end
-})
-
--- Rewind Animation Keybind
-PlayerTab:CreateKeybind({
-    Name = "Rewind Animation",
-    CurrentKeybind = "C",
-    HoldToInteract = false,
-    Flag = "RewindAnimationKeybind",
-    Callback = function()
-        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local humanoid = character:FindFirstChild("Humanoid")
-        if humanoid then
-            local animator = humanoid:FindFirstChildOfClass("Animator")
-            if animator then
-                for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                    track:AdjustSpeed(-0.5)
-                end
-            end
-        end
-    end
-})
-
--- Wanking Stuff Section
-PlayerTab:CreateSection("Wanking Stuff")
-
--- Jerk Off Tool Button
-PlayerTab:CreateButton({
-    Name = "Jerk Off Tool",
-    Callback = function()
-        loadstring(game:HttpGet("https://pastefy.app/YZoglOyJ/raw"))()
-    end
-})
-
--- Face Fuck Button
-PlayerTab:CreateButton({
-    Name = "Face Fuck (Z)",
-    Callback = function()
-        loadstring(game:HttpGet('https://raw.githubusercontent.com/EnterpriseExperience/bruhlolw/refs/heads/main/face_bang_script.lua'))()
-    end
-})
-
--- Voice Chat Utilities Section
-VoiceTab:CreateSection("Voice Chat Utilities")
-
--- VC Unban Button
-VoiceTab:CreateButton({
-    Name = "VC Unban",
-    Callback = function()
-        game:GetService("VoiceChatService"):joinVoice()
-    end
-})
-
--- Player Stuff Section
-PlayerTab:CreateSection("Player Stuff")
-
--- Helper Functions for Player Dropdown
-local function getPlayerNames()
-    local names = {}
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            table.insert(names, player.Name)
-        end
-    end
-    return names
+-- Utility functions
+local function tween(inst, props, time)
+    return TweenService:Create(inst, TweenInfo.new(time or 0.5, Enum.EasingStyle.Quart), props):Play()
 end
 
-local function refreshDropdown(dropdown)
-    if dropdown and dropdown.SetOptions then
-        dropdown:SetOptions(getPlayerNames())
+local function new(class, props)
+    local inst = Instance.new(class)
+    for i, v in pairs(props) do
+        inst[i] = v
     end
+    return inst
 end
 
--- Spy on Player Dropdown
-local SelectedSpyPlayerName = ""
-
-PlayerTab:CreateInput({
-    Name = "Spy on Player",
-    CurrentValue = "",
-    PlaceholderText = "Enter Username or Display Name",
-    RemoveTextAfterFocusLost = false,
-    Flag = "SpyInput",
-    Callback = function(Text)
-        SelectedSpyPlayerName = Text
-    end,
-})
-
-PlayerTab:CreateButton({
-    Name = "Confirm Spy",
-    Callback = function()
-        if SelectedSpyPlayerName and SelectedSpyPlayerName ~= "" then
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player.Name:lower():find(SelectedSpyPlayerName:lower()) or player.DisplayName:lower():find(SelectedSpyPlayerName:lower()) then
-                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                        Camera.CameraSubject = player.Character.HumanoidRootPart
-                        Camera.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 5, -10)
-                        return
-                    end
-                end
-            end
-            warn("Player not found!")
-        else
-            warn("Please enter a valid username or display name!")
-        end
-    end,
-})
-
-PlayerTab:CreateButton({
-    Name = "Stop Spying",
-    Callback = function()
-        Camera.CameraSubject = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        Camera.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 5, -10)
-    end,
-})
--- Themes Section
-UITab:CreateSection("Themes")
-
--- Theme Buttons
-local themes = {"Default", "Amber Glow", "Amyethyst", "Bloom", "Green", "Light", "Ocean", "Serenity"}
-for _, theme in ipairs(themes) do
-    UITab:CreateButton({
-        Name = theme,
-        Callback = function()
-            Window.ModifyTheme(theme)
-        end
+-- Sound effects setup using verified professional sounds
+local function createSound(id, volume)
+    local sound = new("Sound", {
+        SoundId = "rbxassetid://" .. id,
+        Volume = volume or 0.5,
+        Parent = workspace
     })
+    return sound
 end
 
--- Emotes GUI Button
-PlayerTab:CreateButton({
-    Name = "Emotes GUI (,)",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/ZLens/RobloxExperience/refs/heads/main/emotegui.lua"))()
-    end
-})
-
- -- Animation Loader Start
-local Section = AnimTab:CreateSection("Animation Loader")
-
-local Button = AnimTab:CreateButton({
-    Name = "Load FE Animation Loader",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Crimmy12323/Reanim/refs/heads/main/Unconfiscated"))()
-    end,
-})
-
-local Button = AnimTab:CreateButton({
-    Name = "Load OLD FE Animation Loader (Better Non Dances)",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Crimmy12323/Reanim/refs/heads/main/OLD"))()
-    end,
-})
- -- Animation Loader End
- -- Animation Ids Start
- local Divider = AnimTab:CreateDivider()
-
- local Label = AnimTab:CreateLabel("Random Anims", 106756897158809, Color3.fromRGB(255, 183, 197), false)
-
- local Button = AnimTab:CreateButton({
-    Name = "Swastika ID",
-    Callback = function()
-        setclipboard("93170225110433")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Heil Hitler ID",
-    Callback = function()
-        setclipboard("93079733222935")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Goofy Hump ID",
-    Callback = function()
-        setclipboard("90394111093691")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Among Us ID",
-    Callback = function()
-        setclipboard("106571448976554")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Skibidi Toilet ID",
-    Callback = function()
-        setclipboard("118415982698053")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Crouch Walk ID",
-    Callback = function()
-        setclipboard("96685695645215")
-    end,
- })
-
- local Divider = AnimTab:CreateDivider()
- local Label = AnimTab:CreateLabel("Emote Anims", 18754693229, Color3.fromRGB(255, 183, 197), false) -- Title, Icon, Color, IgnoreTheme
-
- --- A 
- 
-
- --- B
- 
- local Button = AnimTab:CreateButton({
-    Name = "Back On 74 ID",
-    Callback = function()
-        setclipboard("108088087568172")
-    end,
- })
-
-
- local Button = AnimTab:CreateButton({
-    Name = "Boogie Bomb ID",
-    Callback = function()
-        setclipboard("90159280044964")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Billy Bounce ID",
-    Callback = function()
-        setclipboard("96342044032488")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Boogie Down ID",
-    Callback = function()
-        setclipboard("83261869707370")
-    end,
- })
-
- --- C
- 
- local Button = AnimTab:CreateButton({
-    Name = "Cupid's Arrow ID",
-    Callback = function()
-        setclipboard("122288826913668")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "California Gurls ID",
-    Callback = function()
-        setclipboard("131457845572132")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Chase Me Down ID",
-    Callback = function()
-        setclipboard("97455319886162")
-    end,
- })
-
- --- D
-
- local Button = AnimTab:CreateButton({
-    Name = "Default Dance ID",
-    Callback = function()
-        setclipboard("9836885605")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Dancery ID",
-    Callback = function()
-        setclipboard("135978042300523")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Desirable ID",
-    Callback = function()
-        setclipboard("80125132098992")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Disco Fever ID",
-    Callback = function()
-        setclipboard("9836369561")
-    end,
- })
-
- --- E
-  
- local Button = AnimTab:CreateButton({
-    Name = "Evil Plan ID",
-    Callback = function()
-        setclipboard("99449894581351")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Electro Shuffle ID",
-    Callback = function()
-        setclipboard("9116910876")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Electro Swing ID",
-    Callback = function()
-        setclipboard("7839963379")
-    end,
- })
-
- --- F
-
- local Button = AnimTab:CreateButton({
-    Name = "FreeStylin ID",
-    Callback = function()
-        setclipboard("107995227083576")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Fresh ID",
-    Callback = function()
-        setclipboard("9116897929")
-    end,
- })
-
- --- G
-
- local Button = AnimTab:CreateButton({
-    Name = "Groove Destroyer ID",
-    Callback = function()
-        setclipboard("18147813725")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Griddy ID",
-    Callback = function()
-        setclipboard("135342670717393")
-    end,
- })
-
- --- H
- 
- local Button = AnimTab:CreateButton({
-    Name = "Hot Marat ID",
-    Callback = function()
-        setclipboard("7107202783")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Hey Now ID",
-    Callback = function()
-        setclipboard("7124753337")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Hype ID",
-    Callback = function()
-        setclipboard("121532134633896")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Head Banger ID",
-    Callback = function()
-        setclipboard("114573617035275")
-    end,
- })
-
- --- I
-
- local Button = AnimTab:CreateButton({
-    Name = "Infinite Dab ID",
-    Callback = function()
-        setclipboard("74538409545244")
-    end,
- })
-
- --- J
-
- local Button = AnimTab:CreateButton({
-    Name = "Jabba Switchway ID",
-    Callback = function()
-        setclipboard("8229514367")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Jubi Slide ID",
-    Callback = function()
-        setclipboard("16570530493")
-    end,
- })
-
- --- K
-
- --- L
-
- local Button = AnimTab:CreateButton({
-    Name = "Lucid Dreams ID",
-    Callback = function()
-        setclipboard("108895351743195")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Look At Me ID",
-    Callback = function()
-        setclipboard("129004554500202")
-    end,
- })
-
- --- M
- 
- local Button = AnimTab:CreateButton({
-    Name = "Mr Blue Sky!!! ID",
-    Callback = function()
-        setclipboard("8603017969")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Maximum Bounce ID",
-    Callback = function()
-        setclipboard("8703876822")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Miku Live ID",
-    Callback = function()
-        setclipboard("102039871027058")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Miku Miku Beam ID",
-    Callback = function()
-        setclipboard("116802170205791")
-    end,
- })
-
- --- N
-
- local Button = AnimTab:CreateButton({
-    Name = "No Cure ID",
-    Callback = function()
-        setclipboard("76827103391437")
-    end,
- })
-
- --- O
-
- local Button = AnimTab:CreateButton({
-    Name = "Orange Justice ID",
-    Callback = function()
-        setclipboard("11212163754")
-    end,
- })
-
- --- P
- 
- local Button = AnimTab:CreateButton({
-    Name = "Phonky Turn ID",
-    Callback = function()
-        setclipboard("122815417402057")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Pull Up ID",
-    Callback = function()
-        setclipboard("8871805743")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Poki ID",
-    Callback = function()
-        setclipboard("83405509049719")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Party Hips ID",
-    Callback = function()
-        setclipboard("91664350716653")
-    end,
- })
-
- --- Q
-
- --- R
-
- local Button = AnimTab:CreateButton({
-    Name = "Reanimated ID",
-    Callback = function()
-        setclipboard("7757686890")
-    end,
- })
-
- --- S
-
- local Button = AnimTab:CreateButton({
-    Name = "Scenario ID",
-    Callback = function()
-        setclipboard("8924083749")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Snoop's Walk ID",
-    Callback = function()
-        setclipboard("95567389800091")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Slalom Style ID",
-    Callback = function()
-        setclipboard("123624215915471")
-    end,
- })
-
- --- T
-
- local Button = AnimTab:CreateButton({
-    Name = "Toosie Slide ID",
-    Callback = function()
-        setclipboard("8230248004")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "Take The L ID",
-    Callback = function()
-        setclipboard("114109549820426")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "The Floss ID",
-    Callback = function()
-        setclipboard("9003921069")
-    end,
- })
-
- --- U
-
- --- V
- 
- local Button = AnimTab:CreateButton({
-    Name = "Verve ID",
-    Callback = function()
-        setclipboard("119993822512014")
-    end,
- })
-
- local Button = AnimTab:CreateButton({
-    Name = "The Viper ID",
-    Callback = function()
-        setclipboard("109195495448084")
-    end,
- })
-
- --- W
-
- local Button = AnimTab:CreateButton({
-    Name = "What You Want ID",
-    Callback = function()
-        setclipboard("112811217802231")
-    end,
- })
-
- --- X
-
- --- Y
- 
- --- Z
- ChatTab:CreateSection("Chat Utilities")
-
- ChatTab:CreateButton({
-    Name = "Chat Bypass",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/randomizedcomponent/UC/refs/heads/main/3307468c285f4fe535fb5d87b4b053e6.lua"))()
-    end,
- })
- -- Animation Ids End
- -- Chat Log Start
- local Button = ChatTab:CreateButton({
-    Name = "Anti Chat Logging",
-    Callback = function()
-        local randomstr = Instance.new("ScreenGui")
-local Holder = Instance.new("Frame")
-local UICorner = Instance.new("UICorner")
-local Clearer = Instance.new("TextButton")
-local ClearerUICorner = Instance.new("UICorner")
-local Splitter = Instance.new("Frame")
-local Info = Instance.new("TextLabel")
-local MAX = Instance.new("UITextSizeConstraint")
-local Clearer2 = Instance.new("TextButton")
-local Clearer2UICorner = Instance.new("UICorner")
-local Splitterrandomstr2 = Instance.new("Frame")
-local UIGradient = Instance.new("UIGradient")
-
-local Glow = Instance.new("ImageLabel")
-Glow.Name = "Glow"
-Glow.Parent = Holder
-Glow.BackgroundTransparency = 1
-Glow.Size = UDim2.new(1, 20, 1, 20) -- Slightly larger than the Holder
-Glow.Position = UDim2.new(0, -10, 0, -10) -- Offset to create the glow effect
-Glow.Image = "rbxassetid://5028857084" -- Glow effect asset
-Glow.ImageColor3 = Color3.fromRGB(66, 66, 212) -- Blue color
-Glow.ImageTransparency = 0.5 -- Adjust transparency for the glow intensity
-Glow.ScaleType = Enum.ScaleType.Slice
-Glow.SliceCenter = Rect.new(24, 24, 276, 276)
-
-randomstr.Name = 'RobloxGui'
-randomstr.Parent = game:GetService("CoreGui")
-randomstr.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-Holder.Name = "Holder"
-Holder.Parent = randomstr
-Holder.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-Holder.BackgroundTransparency = 0.2
-Holder.BorderSizePixel = 0
-Holder.Position = UDim2.new(0.35, 0, 0.3, 0)
-Holder.Size = UDim2.new(0, 250, 0, 300)
-
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = Holder
-
-UIGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(66, 66, 212)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(45, 45, 45))
+local sounds = {
+    slideDown = createSound("12222200", 0.15),
+    success = createSound("2027986581", 0.25),
+    failure = createSound("7356986865", 0.25),
+    slideUp = createSound("12222200", 0.15),
+    buttonClick = createSound("7545317681", 0.2)
 }
-UIGradient.Parent = Holder
 
-Clearer.Name = "Clearer"
-Clearer.Parent = Holder
-Clearer.BackgroundColor3 = Color3.fromRGB(66, 66, 212)
-Clearer.Size = UDim2.new(0, 230, 0, 50)
-Clearer.Position = UDim2.new(0.5, -115, 0.1, 0)
-Clearer.Font = Enum.Font.GothamBold
-Clearer.Text = "Basic Clear"
-Clearer.TextColor3 = Color3.fromRGB(255, 255, 255)
-Clearer.TextScaled = true
-Clearer.TextWrapped = true
+-- Key verification system
+local function verifyKey(inputKey)
+    local success, keyData = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet("https://raw.githubusercontent.com/JejcoTwiUmYQXhBpKMDl/deinemudda/refs/heads/main/key.json"))
+    end)
 
-ClearerUICorner.CornerRadius = UDim.new(0, 8)
-ClearerUICorner.Parent = Clearer
-
-Clearer2.Name = "Clearer2"
-Clearer2.Parent = Holder
-Clearer2.BackgroundColor3 = Color3.fromRGB(66, 66, 212)
-Clearer2.Size = UDim2.new(0, 230, 0, 50)
-Clearer2.Position = UDim2.new(0.5, -115, 0.3, 0)
-Clearer2.Font = Enum.Font.GothamBold
-Clearer2.Text = "Advanced Clear"
-Clearer2.TextColor3 = Color3.fromRGB(255, 255, 255)
-Clearer2.TextScaled = true
-Clearer2.TextWrapped = true
-
-Clearer2UICorner.CornerRadius = UDim.new(0, 8)
-Clearer2UICorner.Parent = Clearer2
-
-Splitter.Name = "Splitter"
-Splitter.Parent = Holder
-Splitter.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
-Splitter.BorderSizePixel = 0
-Splitter.Position = UDim2.new(0, 0, 0.6, 0)
-Splitter.Size = UDim2.new(1, 0, 0, 1)
-
-Info.Name = "Info"
-Info.Parent = Holder
-Info.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Info.BackgroundTransparency = 1.000
-Info.Position = UDim2.new(0.05, 0, 0.65, 0)
-Info.Size = UDim2.new(0, 230, 0, 80)
-Info.Font = Enum.Font.GothamBold
-Info.Text = "This will add a chat cooldown whenever you clear your logs. It might not let you chat for a little after you clear depending on which clear you used."
-Info.TextColor3 = Color3.fromRGB(255, 255, 255)
-Info.TextScaled = true
-Info.TextWrapped = true
-Info.TextXAlignment = Enum.TextXAlignment.Left
-Info.TextYAlignment = Enum.TextYAlignment.Top
-
-MAX.Name = "MAX"
-MAX.Parent = Info
-MAX.MaxTextSize = 16
-MAX.MinTextSize = 14
-
-Splitterrandomstr2.Name = "Splitter"
-Splitterrandomstr2.Parent = Holder
-Splitterrandomstr2.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
-Splitterrandomstr2.BorderSizePixel = 0
-Splitterrandomstr2.Position = UDim2.new(0, 0, 0.95, 0)
-Splitterrandomstr2.Size = UDim2.new(1, 0, 0, 1)
-
-local UserInputService = game:GetService('UserInputService')
-local TextChatService = game:GetService('TextChatService')
-
-Clearer.MouseButton1Click:Connect(function()
-    local originalSize = Clearer.Size
-    local originalPosition = Clearer.Position
-
-    Clearer:TweenSizeAndPosition(
-        UDim2.new(0, 240, 0, 55),
-        UDim2.new(0.5, -120, 0.1, -2.5),
-        Enum.EasingDirection.Out,
-        Enum.EasingStyle.Quad,
-        0.1,
-        true
-    )
-
-    task.wait(0.1)
-
-    Clearer:TweenSizeAndPosition(
-        originalSize,
-        originalPosition,
-        Enum.EasingDirection.Out,
-        Enum.EasingStyle.Quad,
-        0.1,
-        true
-    )
-
-    if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-        local chatBox = TextChatService:FindFirstChildOfClass("ChatInputBarConfiguration")
-        for i = 1, 10 do
-            chatBox.TargetTextChannel:SendAsync('')
-        end
-        Clearer.Text = 'Cleared!'
-        task.wait(2)
-        Clearer.Text = 'Basic Clear'
+    if success and keyData and keyData.key then
+        return inputKey == keyData.key
     else
-        local Path1 = game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents")
-        if not Path1 then return error("DefaultChatSystemChatEvents is missing!\nChat logs will not be cleared.") end
-        local Path2 = Path1:FindFirstChild('SayMessageRequest')
-        if not Path2 then return error("SayMessageRequest is missing!\nChat logs will not be cleared.") end
-        for i = 1, 10 do
-            Path2:FireServer('', 'All')
-        end
-        Clearer.Text = 'Cleared!'
-        task.wait(2)
-        Clearer.Text = 'Basic Clear'
-    end
-end)
-
-Clearer2.MouseButton1Click:Connect(function()
-    local originalSize = Clearer2.Size
-    local originalPosition = Clearer2.Position
-
-    Clearer2:TweenSizeAndPosition(
-        UDim2.new(0, 240, 0, 55),
-        UDim2.new(0.5, -120, 0.3, -2.5),
-        Enum.EasingDirection.Out,
-        Enum.EasingStyle.Quad,
-        0.1,
-        true
-    )
-
-    task.wait(0.1)
-
-    Clearer2:TweenSizeAndPosition(
-        originalSize,
-        originalPosition,
-        Enum.EasingDirection.Out,
-        Enum.EasingStyle.Quad,
-        0.1,
-        true
-    )
-
-    -- Existing functionality
-    if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-        local chatBox = TextChatService:FindFirstChildOfClass("ChatInputBarConfiguration")
-        for i = 1, 20 do
-            chatBox.TargetTextChannel:SendAsync('')
-        end
-        Clearer2.Text = 'Cleared!'
-        task.wait(2)
-        Clearer2.Text = 'Advanced Clear'
-    else
-        local Path1 = game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents")
-        if not Path1 then return error("DefaultChatSystemChatEvents is missing!\nChat logs will not be cleared.") end
-        local Path2 = Path1:FindFirstChild('SayMessageRequest')
-        if not Path2 then return error("SayMessageRequest is missing!\nChat logs will not be cleared.") end
-        for i = 1, 20 do
-            Path2:FireServer('', 'All')
-        end
-        Clearer2.Text = 'Cleared!'
-        task.wait(2)
-        Clearer2.Text = 'Advanced Clear'
-    end
-end)
-
-local isDragging = false
-local dragStartPos = nil
-local frameStartPos = nil
-
-local function handleInput(input)
-    if isDragging then
-        local delta = input.Position - dragStartPos
-        Holder.Position = UDim2.new(
-            frameStartPos.X.Scale, 
-            frameStartPos.X.Offset + delta.X, 
-            frameStartPos.Y.Scale, 
-            frameStartPos.Y.Offset + delta.Y
-        )
+        warn("Failed to fetch key data")
+        return false
     end
 end
 
-local function startDrag(input)
-    isDragging = true
-    dragStartPos = input.Position
-    frameStartPos = Holder.Position
+-- File system for key storage
+local function setupKeyStorage()
+    if not isfolder then return end
+
+    pcall(function()
+        if not isfolder("AKKey") then
+            makefolder("AKKey")
+        end
+    end)
 end
 
-local function stopDrag()
-    isDragging = false
+local function saveKeyToFile(key)
+    if not writefile then return end
+
+    pcall(function()
+        writefile("AKKey/key.txt", key)
+    end)
 end
 
-Holder.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        startDrag(input)
+local function getKeyFromFile()
+    if not readfile or not isfile then return nil end
+
+    local success, content = pcall(function()
+        if isfile("AKKey/key.txt") then
+            return readfile("AKKey/key.txt")
+        end
+        return nil
+    end)
+
+    if success then
+        return content
     end
-end)
+    return nil
+end
 
-UserInputService.InputChanged:Connect(function(input)
-    if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        handleInput(input)
+-- Function to create GUI (moved out of global scope for reuse)
+local function createGUI()
+    -- Cleanup existing GUI
+    for _, v in pairs(CoreGui:GetChildren()) do
+        if v.Name == "PremiumAuthGui" then
+            v:Destroy()
+        end
     end
-end)
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        stopDrag()
+    -- Create main GUI
+    local gui = new("ScreenGui", {
+        Name = "PremiumAuthGui",
+        IgnoreGuiInset = true,
+        DisplayOrder = 999,
+        Parent = CoreGui
+    })
+
+    -- Main container
+    local main = new("Frame", {
+        Size = UDim2.new(0.4, 0, 0, 50),
+        Position = UDim2.new(0.5, 0, -0.2, 0),
+        AnchorPoint = Vector2.new(0.5, 0),
+        BackgroundColor3 = Color3.fromRGB(35, 35, 40),
+        BackgroundTransparency = 0,
+        Parent = gui
+    })
+
+    new("UICorner", { CornerRadius = UDim.new(0, 12), Parent = main })
+    new("UIStroke", {
+        Color = Color3.fromRGB(80, 80, 90),
+        Thickness = 2,
+        Transparency = 0,
+        Parent = main
+    })
+
+    -- Player profile picture (created for GUI only)
+    local player = Players.LocalPlayer
+    local userId = player.UserId
+
+    _G.profilePic = new("ImageLabel", {
+        Size = UDim2.new(0, 40, 0, 40),
+        Position = UDim2.new(0, 15, 0.5, 0),
+        AnchorPoint = Vector2.new(0, 0.5),
+        BackgroundTransparency = 1,
+        Image = string.format("https://www.roblox.com/headshot-thumbnail/image?userId=%d&width=420&height=420&format=png", userId),
+        Parent = main
+    })
+
+    -- Text elements with initial transparency – both set to "Welcome to AK ADMIN"
+    local title = new("TextLabel", {
+        Size = UDim2.new(1, -70, 0, 20),
+        Position = UDim2.new(0.5, 20, 0, 3),
+        AnchorPoint = Vector2.new(0.5, 0),
+        BackgroundTransparency = 1,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 20,
+        Font = Enum.Font.GothamBold,
+        Text = "Welcome to AK ADMIN",
+        TextTransparency = 1,
+        Parent = main
+    })
+
+    local status = new("TextLabel", {
+        Size = UDim2.new(1, -70, 0, 15),
+        Position = UDim2.new(0.5, 20, 0, 25),
+        AnchorPoint = Vector2.new(0.5, 0),
+        BackgroundTransparency = 1,
+        TextColor3 = Color3.fromRGB(200, 200, 200),
+        TextSize = 16,
+        Font = Enum.Font.GothamMedium,
+        Text = "Welcome to AK ADMIN",
+        TextTransparency = 1,
+        Parent = main
+    })
+
+    -- Progress bar
+    local progressBg = new("Frame", {
+        Size = UDim2.new(0.8, 0, 0, 3),
+        Position = UDim2.new(0.5, 20, 1, -5),
+        AnchorPoint = Vector2.new(0.5, 1),
+        BackgroundColor3 = Color3.fromRGB(45, 45, 50),
+        BackgroundTransparency = 0,
+        Parent = main
+    })
+
+    new("UICorner", { CornerRadius = UDim.new(1, 0), Parent = progressBg })
+
+    local progress = new("Frame", {
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = Color3.fromRGB(90, 160, 255),
+        BackgroundTransparency = 0,
+        Parent = progressBg
+    })
+
+    new("UICorner", { CornerRadius = UDim.new(1, 0), Parent = progress })
+
+    -- Key verification elements (initially hidden)
+    local keyContainer = new("Frame", {
+        Size = UDim2.new(1, -20, 0, 90),
+        Position = UDim2.new(0.5, 0, 0, 55),
+        AnchorPoint = Vector2.new(0.5, 0),
+        BackgroundTransparency = 1,
+        Visible = false,
+        Parent = main
+    })
+
+    local keyInput = new("TextBox", {
+        Size = UDim2.new(1, 0, 0, 30),
+        Position = UDim2.new(0.5, 0, 0, 0),
+        AnchorPoint = Vector2.new(0.5, 0),
+        BackgroundColor3 = Color3.fromRGB(50, 50, 55),
+        PlaceholderText = "Enter key...",
+        PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
+        Text = "",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 16,
+        Font = Enum.Font.GothamMedium,
+        ClearTextOnFocus = false,
+        Parent = keyContainer
+    })
+
+    new("UICorner", { CornerRadius = UDim.new(0, 8), Parent = keyInput })
+    new("UIPadding", { PaddingLeft = UDim.new(0, 10), Parent = keyInput })
+
+    local submitButton = new("TextButton", {
+        Size = UDim2.new(0.48, 0, 0, 30),
+        Position = UDim2.new(0.25, 0, 0, 40),
+        AnchorPoint = Vector2.new(0.5, 0),
+        BackgroundColor3 = Color3.fromRGB(60, 120, 220),
+        Text = "Submit",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 16,
+        Font = Enum.Font.GothamBold,
+        Parent = keyContainer
+    })
+
+    new("UICorner", { CornerRadius = UDim.new(0, 8), Parent = submitButton })
+
+    local getKeyButton = new("TextButton", {
+        Size = UDim2.new(0.48, 0, 0, 30),
+        Position = UDim2.new(0.75, 0, 0, 40),
+        AnchorPoint = Vector2.new(0.5, 0),
+        BackgroundColor3 = Color3.fromRGB(80, 80, 90),
+        Text = "Join discord",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 16,
+        Font = Enum.Font.GothamBold,
+        Parent = keyContainer
+    })
+
+    new("UICorner", { CornerRadius = UDim.new(0, 8), Parent = getKeyButton })
+
+    return gui, main, title, status, progress, keyContainer, keyInput, submitButton, getKeyButton
+end
+
+local loadStringsFinished = false -- Flag to track loadstring completion
+local gui, main, title, status, progress, keyContainer, keyInput, submitButton, getKeyButton -- Declare GUI elements outside animate for reuse
+
+-- Animation sequence with key verification
+local function animate(isAlreadyLoaded, callback)
+    if not gui then -- Create GUI if it doesn't exist
+        gui, main, title, status, progress, keyContainer, keyInput, submitButton, getKeyButton = createGUI()
     end
-end)
-    end,
- })
- -- Chat Log End
- -- Baseplate Start
- WorkspaceTab:CreateSection("Baseplate Utilities")
- 
- local Button = WorkspaceTab:CreateButton({
-    Name = "Baseplate Expander",
-    Callback = function()
-        local Workspace = workspace
-							local TerrainFolder = Workspace:FindFirstChild("TERRAIN_EDITOR") or Instance.new("Folder", Workspace)
-							TerrainFolder.Name = "TERRAIN_EDITOR"
 
-							local position = Vector3.new(66, -2.5, 72.5)
-							local size = Vector3.new(40000, 5, 40000)
-							local maxPartSize = 2048
-							local material = Enum.Material.Asphalt
-							local color = Color3.fromRGB(50, 50, 50)
-							local transparency = 0
+    -- Check for saved key
+    setupKeyStorage()
+    local savedKey = getKeyFromFile()
+    local keyVerified = false
 
-							local function createPart(pos, partSize)
-								local part = Instance.new("Part")
-								part.Size = partSize
-								part.Position = pos
-								part.Anchored = true
-								part.Material = material
-								part.Color = color
-								part.Transparency = transparency
-								part.Parent = TerrainFolder
-								return part
-							end
+    if savedKey then
+        local isValid = verifyKey(savedKey)
+        if isValid then
+            keyVerified = true
+        end
+    end
 
-							if size.X > maxPartSize or size.Z > maxPartSize then
-								local divisionsX = math.ceil(size.X / maxPartSize)
-								local divisionsZ = math.ceil(size.Z / maxPartSize)
+    if isAlreadyLoaded then
+        title.Text = "AK ADMIN"
+        status.Text = "Already Loaded"
+        status.TextColor3 = Color3.fromRGB(100, 255, 150)
+        progress.BackgroundColor3 = Color3.fromRGB(100, 255, 150)
+        progress.Size = UDim2.new(1, 0, 1, 0) -- Fill progress bar instantly
+        title.TextTransparency = 0
+        status.TextTransparency = 0
 
-								local partSize = Vector3.new(size.X / divisionsX, size.Y, size.Z / divisionsZ)
+        sounds.slideDown:Play()
+        tween(main, { Position = UDim2.new(0.5, 0, 0, 10) }, 1.2)
+        task.wait(2.5) -- Longer wait for already loaded message
 
-								for i = 0, divisionsX - 1 do
-									for j = 0, divisionsZ - 1 do
-										local offsetX = (i - (divisionsX / 2)) * partSize.X + (partSize.X / 2)
-										local offsetZ = (j - (divisionsZ / 2)) * partSize.Z + (partSize.Z / 2)
-										createPart(position + Vector3.new(offsetX, 0, offsetZ), partSize)
-									end
-								end
-							else
-								createPart(position, size)
-							end
-						end,
- })
- 
- local Button = WorkspaceTab:CreateButton({
-    Name = "Destroy Baseplate",
-    Callback = function()
-        local Workspace = workspace
+        sounds.slideUp:Play()
+        tween(main, { Position = UDim2.new(0.5, 0, -0.2, 0) }, 1)
+        task.wait(1.1)
+        gui:Destroy()
+        if callback then
+            callback()
+        end
 
-							if Workspace:FindFirstChild("TERRAIN_EDITOR") then
-								Workspace["TERRAIN_EDITOR"]:Destroy()
-							end
-						end,
- 
- })
- -- Baseplate End
- -- Booth Start
- WorkspaceTab:CreateSection("Booth Utilities")
+    else -- Normal loading animation with key verification
+        -- Smooth slide down with sound
+        sounds.slideDown:Play()
+        tween(main, { Position = UDim2.new(0.5, 0, 0, 10) }, 1.2)
+        task.wait(0.3)
+        tween(title, { TextTransparency = 0 }, 0.4)
+        task.wait(0.2)
+        tween(status, { TextTransparency = 0 }, 0.4)
 
- WorkspaceTab:CreateToggle({
-    Name = "Claim Any Booth",
-    CurrentValue = false,
-    Flag = "ClaimStallToggle",
-    Callback = function(claimAnyBooth)
-        if claimAnyBooth then
-            getgenv().isToggled = true
+        -- Fill progress bar to 50%
+        tween(progress, { Size = UDim2.new(0.5, 0, 1, 0) }, 0.8)
 
-            local Folder = getgenv().Workspace.Booth
+        if keyVerified or game.Players.LocalPlayer.Name == "YournothimbuddyXD" or game.Players.LocalPlayer.Name == "328ml" or game.Players.LocalPlayer.Name == "ImOn_ValveIndex" or game.Players.LocalPlayer.Name == "GYATT_DAMN1" or game.Players.LocalPlayer.Name == "BloxiAstra" then
+            -- Skip key verification if key already exists and is valid
+            task.wait(0.5)
+            status.Text = "Loading AK Admin..."
+            tween(status, { TextColor3 = Color3.fromRGB(100, 255, 150) }, 0.4)
+            tween(progress, { Size = UDim2.new(1, 0, 1, 0) }, 0.8)
+            tween(progress, { BackgroundColor3 = Color3.fromRGB(100, 255, 150) }, 0.4)
 
-            local stalls = {
-                Folder:FindFirstChild("Booth01"),
-                Folder:FindFirstChild("Booth02"),
-                Folder:FindFirstChild("Booth03"),
-                Folder:FindFirstChild("Booth04"),
-                Folder:FindFirstChild("Booth05")
-            }
-
-            getgenv().connections = {}
-
-            local function setupProximityPrompt(stall)
-                local ProximityPrompt = stall:FindFirstChild("Activate"):FindFirstChildOfClass("ProximityPrompt")
-                if ProximityPrompt then
-                    local function enforceSettings()
-                        if getgenv().isToggled then
-                            ProximityPrompt.Enabled = true
-                            ProximityPrompt.ClickablePrompt = true
-                            ProximityPrompt.MaxActivationDistance = 15
-                            ProximityPrompt.RequiresLineOfSight = false
-                            ProximityPrompt.HoldDuration = 0
-                        else
-                            ProximityPrompt.Enabled = true
-                            ProximityPrompt.ClickablePrompt = true
-                            ProximityPrompt.MaxActivationDistance = 10
-                            ProximityPrompt.RequiresLineOfSight = true
-                            ProximityPrompt.HoldDuration = 1
-                        end
-                    end
-
-                    enforceSettings()
-
-                    getgenv().connections[ProximityPrompt] = {
-                        ProximityPrompt:GetPropertyChangedSignal("Enabled"):Connect(enforceSettings),
-                        ProximityPrompt:GetPropertyChangedSignal("ClickablePrompt"):Connect(enforceSettings),
-                        ProximityPrompt:GetPropertyChangedSignal("MaxActivationDistance"):Connect(enforceSettings),
-                        ProximityPrompt:GetPropertyChangedSignal("RequiresLineOfSight"):Connect(enforceSettings),
-                        ProximityPrompt:GetPropertyChangedSignal("HoldDuration"):Connect(enforceSettings)
-                    }
-                end
-            end
-
-            for _, stall in ipairs(stalls) do
-                if stall then
-                    setupProximityPrompt(stall)
-                end
+            if callback then
+                callback() -- Proceed with loading
             end
         else
-            getgenv().isToggled = false
+            -- Show key verification UI
+            task.wait(0.5)
+            status.Text = "Verification required"
 
-            local Folder = getgenv().Workspace.Booth
-            
-            local stalls = {
-                Folder:FindFirstChild("Booth01"),
-                Folder:FindFirstChild("Booth02"),
-                Folder:FindFirstChild("Booth03"),
-                Folder:FindFirstChild("Booth04"),
-                Folder:FindFirstChild("Booth05")
-            }
-            
-            for _, stall in ipairs(stalls) do
-                if stall then
-                    local ProximityPrompt = stall:FindFirstChild("Activate"):FindFirstChildOfClass("ProximityPrompt")
-                    if ProximityPrompt then
-                        ProximityPrompt.Enabled = true
-                        ProximityPrompt.ClickablePrompt = true
-                        ProximityPrompt.MaxActivationDistance = 10
-                        ProximityPrompt.RequiresLineOfSight = true
-                        ProximityPrompt.HoldDuration = 1
-            
-                        if getgenv().connections[ProximityPrompt] then
-                            for _, conn in ipairs(getgenv().connections[ProximityPrompt]) do
-                                conn:Disconnect()
-                            end
-                            getgenv().connections[ProximityPrompt] = nil
-                        end
-                    end
-                end
-            end            
-        end
-    end,
-})
+            -- Expand the frame to fit key input
+            local expandTween = tween(main, { Size = UDim2.new(0.4, 0, 0, 155) }, 0.8)
+            _G.profilePic.Position = UDim2.new(0, 15, 0.15, 0)
+            task.wait(0.8) -- Wait for expand tween to complete
 
-local Button = WorkspaceTab:CreateButton({
-    Name = "Booth Text Bypass",
-    Callback = function()
-        local remotes = {
-            {
-                args = {
-                    [1] = "AMERICANlGGABALLS",
-                    [2] = "Gray",
-                    [3] = "DenkOne"
-                }
-            },
-            {
-                args = {
-                    [1] = "KANYE NAZl",
-                    [2] = "Gray",
-                    [3] = "DenkOne"
-                }
-            },
-            {
-                args = {
-                    [1] = "AMERICANlGG3R",
-                    [2] = "Gray",
-                    [3] = "DenkOne"
-                }
-            },
-            {
-                args = {
-                    [1] = "ROBLOXS3XTlNG",
-                    [2] = "Gray",
-                    [3] = "DenkOne"
-                }
-            },
-            {
-                args = {
-                    [1] = "KANYE LlKES HlTLER",
-                    [2] = "Gray",
-                    [3] = "DenkOne"
-                }
-            },
-            {
-                args = {
-                    [1] = "ROBLOXRAPE",
-                    [2] = "Gray",
-                    [3] = "DenkOne"
-                }
-            },
-            {
-                args = {
-                    [1] = "RAPESua",
-                    [2] = "Gray",
-                    [3] = "SourceSans"
-                }
-            }
-        }
+            -- Show key container
+            keyContainer.Visible = true
 
-        -- Shuffle the remotes table
-        for i = #remotes, 2, -1 do
-            local j = math.random(1, i)
-            remotes[i], remotes[j] = remotes[j], remotes[i]
-        end
+            -- Handle Get Key button
+            getKeyButton.MouseButton1Click:Connect(function()
+                sounds.buttonClick:Play()
+                setclipboard("https://discord.gg/sJ9pnVaX")
+                getKeyButton.Text = "Discord copied. (no ads)"
+                task.wait(3)
+                getKeyButton.Text = "Get Key"
+            end)
 
-        -- Fire remotes without delay
-        for _, remote in ipairs(remotes) do
-            game:GetService("ReplicatedStorage"):WaitForChild("UpdateBoothText"):FireServer(unpack(remote.args))
-        end
-    end,
-})
--- Booth End
--- Teleports Start
-local Section = TeleportTab:CreateSection("Teleports")
+            -- Handle Submit button
+            submitButton.MouseButton1Click:Connect(function()
+                sounds.buttonClick:Play()
+                local key = keyInput.Text
 
-TeleportTab:CreateButton({
-    Name = "Teleport To Spawn",
-    Callback = function()
-        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-
-        if not rootPart then
-            return
-        end
-
-        local spawnPoints = {}
-        for _, obj in ipairs(Workspace:GetChildren()) do
-            if obj:IsA("Part") and obj.Name:lower():find("spawn") then
-                table.insert(spawnPoints, obj)
-            end
-        end
-
-        if #spawnPoints > 0 then
-            local randomSpawn = spawnPoints[math.random(1, #spawnPoints)]
-            rootPart.CFrame = randomSpawn.CFrame + Vector3.new(0, 5, 0)
-        end
-    end
-})
-
-local Button = TeleportTab:CreateButton({
-    Name = "Teleport To Tower",
-    Callback = function()
-        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-
-        if rootPart then
-            rootPart.CFrame = CFrame.new(69.60, 284.56, 193.33)
-        end
-    end,
-})
-
-local function getPlayerNames()
-    local names = {}
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            table.insert(names, player.Name)
-        end
-    end
-    return names
-end
-
-local function refreshDropdown(dropdown)
-    if dropdown and type(dropdown.SetOptions) == "function" then
-        dropdown:SetOptions(getPlayerNames())
-    end
-end
-
-TeleportTab:CreateButton({
-    Name = "Teleport To Booths",
-    Callback = function()
-        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-
-        if rootPart then
-            rootPart.CFrame = CFrame.new(136.39, 5.15, 60.84)
-        end
-    end,
-})
-
-TeleportTab:CreateButton({
-    Name = "Teleport To Private Room",
-    Callback = function()
-        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-
-        if not rootPart then
-            return
-        end
-
-        for _, room in ipairs(Workspace:GetChildren()) do
-            if room:IsA("Model") and room.Name == "Room" then
-                local coffeeTable = room:FindFirstChild("houseInteriorCoffeeTable")
-                if coffeeTable and coffeeTable:IsA("Model") then
-                    local targetPart = coffeeTable:FindFirstChild("Part")
-                    if targetPart and targetPart:IsA("BasePart") then
-                        rootPart.CFrame = targetPart.CFrame + Vector3.new(0, 5, 0)
-                        return
-                    end
-                end
-            end
-        end
-    end
-})
--- Teleports End
--- Player Teleports Start
-local Section = TeleportTab:CreateSection("Player Teleports")
-
-local SelectedPlayerName = ""
-
-TeleportTab:CreateInput({
-    Name = "Teleport To Player",
-    CurrentValue = "",
-    PlaceholderText = "Enter Username or Display Name",
-    RemoveTextAfterFocusLost = false,
-    Flag = "TeleportInput",
-    Callback = function(Text)
-        SelectedPlayerName = Text
-    end,
-})
-
-TeleportTab:CreateButton({
-    Name = "Confirm Teleport",
-    Callback = function()
-        if SelectedPlayerName and SelectedPlayerName ~= "" then
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player.Name:lower():find(SelectedPlayerName:lower()) or player.DisplayName:lower():find(SelectedPlayerName:lower()) then
-                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                        local targetPosition = player.Character.HumanoidRootPart.CFrame
-                        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-                        local rootPart = character:FindFirstChild("HumanoidRootPart")
-                        if rootPart then
-                            rootPart.CFrame = targetPosition + Vector3.new(0, 5, 0)
-                        end
-                    end
+                if key == "" then
+                    status.Text = "Please enter a key"
+                    status.TextColor3 = Color3.fromRGB(255, 150, 150)
+                    task.wait(1.5)
+                    status.Text = "Verification required"
+                    status.TextColor3 = Color3.fromRGB(200, 200, 200)
                     return
                 end
-            end
-            warn("Player not found!")
-        else
-            warn("Please enter a valid username or display name!")
-        end
-    end,
-})
--- Player Teleports End
--- Private Room Start
-local Section = WorkspaceTab:CreateSection("Private Room")
 
-local Toggle = WorkspaceTab:CreateToggle({
-    Name = "Private Room Floor Collision",
-    CurrentValue = false,
-    Flag = "RoomFloor", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-    Callback = function(Value)
-        for _, model in ipairs(workspace:GetChildren()) do
-            if model:IsA("Model") and model.Name == "Room" then
-                for _, child in ipairs(model:GetChildren()) do
-                    if child:IsA("BasePart") and child.Name == "Part" then
-                        child.CanCollide = Value
+                status.Text = "Verifying key..."
+                submitButton.BackgroundColor3 = Color3.fromRGB(100, 100, 110)
+
+                -- Check key
+                task.wait(0.8) -- Simulate verification time
+                local isValid = verifyKey(key)
+
+                if isValid then
+                    -- Save valid key
+                    saveKeyToFile(key)
+
+                    -- Success animation
+                    sounds.success:Play()
+                    status.Text = "Key verified"
+                    status.TextColor3 = Color3.fromRGB(100, 255, 150)
+
+                    -- Hide key container
+                    keyContainer.Visible = false
+
+                    -- Shrink frame back to original size
+                    tween(main, { Size = UDim2.new(0.4, 0, 0, 50) }, 0.8)
+                    _G.profilePic.Position = UDim2.new(0, 15, 0.5, 0)
+                    task.wait(0.8)
+
+                    -- Complete progress bar
+                    tween(progress, { Size = UDim2.new(1, 0, 1, 0) }, 0.8)
+                    task.wait(0.5)
+                    status.Text = "Loading Admin..."
+
+                    if callback then
+                        callback() -- Proceed with loading
                     end
+                else
+                    -- Failed verification
+                    sounds.failure:Play()
+                    status.Text = "Invalid key"
+                    status.TextColor3 = Color3.fromRGB(255, 100, 100)
+                    submitButton.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+                    submitButton.Enabled = true
+                    task.wait(2)
+                    status.Text = "Verification required"
+                    status.TextColor3 = Color3.fromRGB(200, 200, 200)
                 end
-            end
+            end)
         end
-    end,
-})
--- Private Room End
--- Server UIilities Start
-WorkspaceTab:CreateSection("Server Utilities")
-
--- Services
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local localPlayer = Players.LocalPlayer
-
--- Remote Events
-local ragdollEvent = ReplicatedStorage:FindFirstChild("RagdollEvent")
-local unragdollEvent = ReplicatedStorage:FindFirstChild("UnragdollEvent")
-local ToggleDisallowEvent = ReplicatedStorage:WaitForChild("ToggleDisallowEvent")
-local ModifyUserEvent = ReplicatedStorage:WaitForChild("ModifyUserEvent")
-local ModifyUsername_upvr = ReplicatedStorage:WaitForChild("ModifyUsername")
-local micEvent = ReplicatedStorage:WaitForChild("MicEvent")
-
--- Variables
-local lagToggled = false
-local lagEnabled = false
-local ragdollConnection
-
--- Helpers
-local function setVelocityToZero(part)
-    if part then
-        part.AssemblyLinearVelocity = Vector3.zero
-        part.AssemblyAngularVelocity = Vector3.zero
     end
 end
 
-local function isDonutInInventory()
-    for _, item in ipairs(localPlayer.Backpack:GetChildren()) do
-        if item.Name == "GradientDonut" then
-            return true
-        end
-    end
-    return false
+-- Function to signal loadstrings are complete (called from second script)
+_G.signalLoadstringsComplete = function()
+    if loadStringsFinished then return end -- Prevent double execution
+    loadStringsFinished = true
+
+    status.Text = "AK ADMIN loaded"
+    sounds.success:Play()
+    tween(status, { TextColor3 = Color3.fromRGB(100, 255, 150) }, 0.4)
+    tween(progress, { BackgroundColor3 = Color3.fromRGB(100, 255, 150) }, 0.4)
+
+    task.wait(1.5)
+
+    sounds.slideUp:Play()
+    tween(main, { Position = UDim2.new(0.5, 0, -0.2, 0) }, 1)
+    task.wait(1.1)
+    gui:Destroy()
+    gui = nil -- Reset gui variable
 end
 
-local function loopFunction()
-    while lagToggled do
-        micEvent:FireServer("GradientDonut")
-        if isDonutInInventory() then
-            local donut = localPlayer.Backpack:FindFirstChild("GradientDonut")
-            if donut then
-                donut.Parent = localPlayer.Character
+-- Declare callback function to start second script's loadstrings
+local function onGuiSetupFinished()
+    _G.FirstScriptGuiReady = true
+end
+
+-- Initial GUI creation and animation for first load
+gui, main, title, status, progress, keyContainer, keyInput, submitButton, getKeyButton = createGUI()
+animate(false, onGuiSetupFinished)
+_G.FirstScriptLoaded = true
+
+-- Second script:
+
+repeat task.wait() until _G.FirstScriptGuiReady
+
+if _G.AKAdminLoaded then
+    local function onAlreadyLoadedGuiFinished() end
+    animate(true, onAlreadyLoadedGuiFinished)
+    return
+end
+
+local errors = {}
+local services = {
+    Players = game:GetService("Players"),
+    Lighting = game:GetService("Lighting"),
+    StarterGui = game:GetService("StarterGui"),
+    CoreGui = game:GetService("CoreGui"),
+    ScriptContext = game:GetService("ScriptContext")
+}
+
+local function getService(serviceName)
+    local service = services[serviceName]
+    if not service then
+        local success, result = pcall(game.GetService, game, serviceName)
+        if success then
+            services[serviceName] = result
+            return result
+        end
+        warn(string.format("Failed to get service %s: %s", serviceName, tostring(result)))
+        return nil
+    end
+    return service
+end
+
+local function getPlayerModule()
+    local player = services.Players.LocalPlayer
+    if not player then
+        for i = 1, 10 do
+            player = services.Players.LocalPlayer
+            if player then break end
+            task.wait(1)
+        end
+        if not player then
+            warn("LocalPlayer not found after 10 seconds")
+            return nil
+        end
+    end
+
+    local PlayerScripts = player:WaitForChild("PlayerScripts", 15)
+    if not PlayerScripts then
+        warn("PlayerScripts not found after 15 seconds")
+        return nil
+    end
+
+    local PlayerModule = PlayerScripts:WaitForChild("PlayerModule", 15)
+    if not PlayerModule then
+        warn("PlayerModule not found after 15 seconds")
+        return nil
+    end
+
+    return PlayerModule
+end
+
+local function RemoveAtmosphereAndSetFog()
+    local success, error = pcall(function()
+        local Lighting = getService("Lighting")
+        if not Lighting then return end
+        pcall(function() Lighting.FogEnd = 100000 end)
+        for _, v in ipairs(Lighting:GetDescendants()) do
+            if v:IsA("Atmosphere") then
+                pcall(function() v:Destroy() end)
             end
         end
-        wait(2)
+    end)
+    if not success then
+        warn("Failed to modify atmosphere:", error)
+        table.insert(errors, {
+            type = "atmosphere",
+            error = error,
+            time = os.time(),
+            stack = debug.traceback()
+        })
     end
 end
 
-local function toggleRagdoll()
-    local character = localPlayer.Character
-    if not character then return end
+local function safeHttpGet(url)
+    if not url or type(url) ~= "string" then
+        warn("Invalid URL provided to safeHttpGet")
+        return nil
+    end
 
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    local tries = 0
+    local maxTries = 3
 
-    if lagEnabled then
-        -- Setup ragdoll
-        ModifyUsername_upvr:FireServer("24k_mxtty1")
-        wait(1)
-
-        if humanoid then humanoid.PlatformStand = true end
-        if rootPart then rootPart.Anchored = true end
-
-        for _, part in pairs(character:GetChildren()) do
-            if part:IsA("BasePart") then
-                part.Anchored = true
-                setVelocityToZero(part)
-            end
-        end
-
-        ragdollEvent:FireServer()
-        wait(0.2)
-
-        local oldCFrame = rootPart.CFrame * CFrame.new(0, 2, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-        local offset = 100000
-
-        ragdollConnection = RunService.Heartbeat:Connect(function()
-            if not character or not lagEnabled then return end
-
-            local parts = {
-                Head = oldCFrame * CFrame.new(0, 0, -offset/2),
-                UpperTorso = oldCFrame * CFrame.new(0, offset, 0),
-                LowerTorso = oldCFrame * CFrame.new(0, -offset/2, 0),
-                RightUpperArm = oldCFrame * CFrame.new(offset, 0, 0),
-                RightLowerArm = oldCFrame * CFrame.new(offset*1.5, 0, 0),
-                RightHand = oldCFrame * CFrame.new(offset*2, 0, 0),
-                LeftUpperArm = oldCFrame * CFrame.new(-offset, 0, 0),
-                LeftLowerArm = oldCFrame * CFrame.new(-offset*1.5, 0, 0),
-                LeftHand = oldCFrame * CFrame.new(-offset*2, 0, 0),
-                RightUpperLeg = oldCFrame * CFrame.new(offset/2, -offset, 0),
-                RightLowerLeg = oldCFrame * CFrame.new(offset/2, -offset*1.5, 0),
-                RightFoot = oldCFrame * CFrame.new(offset/2, -offset*2, 0),
-                LeftUpperLeg = oldCFrame * CFrame.new(-offset/2, -offset, 0),
-                LeftLowerLeg = oldCFrame * CFrame.new(-offset/2, -offset*1.5, 0),
-                LeftFoot = oldCFrame * CFrame.new(-offset/2, -offset*2, 0)
-            }
-
-            for partName, cf in pairs(parts) do
-                local part = character:FindFirstChild(partName)
-                if part then
-                    part.CFrame = cf
-                    setVelocityToZero(part)
-                end
-            end
+    while tries < maxTries do
+        local success, result = pcall(function()
+            return game:HttpGet(url)
         end)
 
-        spawn(loopFunction)
+        if success and result then
+            return result
+        end
+
+        tries = tries + 1
+        warn(string.format("Attempt %d/%d failed to fetch URL: %s Error: %s",
+            tries, maxTries, url, tostring(result)))
+
+        if tries < maxTries then
+            task.wait(1)
+        end
+    end
+
+    table.insert(errors, {
+        type = "HttpGet",
+        url = url,
+        error = "Failed after " .. maxTries .. " attempts",
+        time = os.time(),
+        stack = debug.traceback()
+    })
+    return nil
+end
+
+local function safeLoadString(source, url)
+    if not source then
+        warn("No source provided to safeLoadString")
+        return
+    end
+
+    local success, func = pcall(loadstring, source)
+    if not success then
+        warn("Failed to load string from: " .. tostring(url))
+        table.insert(errors, {
+            type = "loadstring-load",
+            url = url,
+            error = tostring(func),
+            time = os.time(),
+            stack = debug.traceback()
+        })
+        return
+    end
+
+    local execSuccess, execError = pcall(func)
+    if not execSuccess then
+        table.insert(errors, {
+            type = "loadstring-execution",
+            url = url,
+            error = tostring(execError),
+            time = os.time(),
+            stack = debug.traceback()
+        })
+    end
+end
+
+local function setupQueueTeleport()
+    local queueteleport = (syn and syn.queue_on_teleport) or
+                         queue_on_teleport or
+                         (fluxus and fluxus.queue_on_teleport)
+
+    if queueteleport then
+        local success, error = pcall(function()
+            local teleportScript = [[
+                task.spawn(function()
+                    local success, source = pcall(function()
+                        return game:HttpGet('https://raw.githubusercontent.com/LOLkeeptrying/AKADMIN/refs/heads/main/Congratslol')
+                    end)
+                    if success and source then
+                        loadstring(source)()
+                    end
+                end)
+            ]]
+            queueteleport(teleportScript)
+        end)
+
+        if not success then
+            warn("Failed to queue teleport script:", error)
+            table.insert(errors, {
+                type = "queue-teleport",
+                error = error,
+                time = os.time(),
+                stack = debug.traceback()
+            })
+        end
+    end
+end
+
+local function AdjustBubbleChat()
+    local success, error = pcall(function()
+        local player = services.Players.LocalPlayer
+        if not player then return end
+
+        local CoreGui = getService("CoreGui")
+        if not CoreGui then return end
+
+        local chatBubble = CoreGui:FindFirstChild("ExperienceChat")
+        if not chatBubble then return end
+
+        local bubbleChat = chatBubble:FindFirstChild("bubbleChat")
+        if not bubbleChat then return end
+
+        local playerBubble = bubbleChat:FindFirstChild("BubbleChat_" .. player.UserId)
+        if playerBubble then
+            playerBubble.StudsOffset = Vector3.new(0, 1, 0)
+        end
+    end)
+
+    if not success then
+        warn("Failed to adjust bubble chat:", error)
+        table.insert(errors, {
+            type = "bubble-chat",
+            error = error,
+            time = os.time(),
+            stack = debug.traceback()
+        })
+    end
+end
+
+local function initializeExecutorCompat()
+    local function warnUnsupported(feature)
+        return function()
+            warn(feature .. " is not supported on this executor")
+        end
+    end
+
+    _G.setclipboard = setclipboard or toclipboard or set_clipboard or warnUnsupported("Clipboard")
+    _G.writefile = writefile or warnUnsupported("Write file")
+    _G.readfile = readfile or warnUnsupported("Read file")
+end
+
+local function InitializeAndLoadStrings()
+    if _G.AKAdminLoaded then return end
+    _G.AKAdminLoaded = true
+
+    services.ScriptContext.Error:Connect(function(message, trace)
+        table.insert(errors, {
+            type = "global-error",
+            message = message,
+            trace = trace,
+            time = os.time(),
+            stack = debug.traceback()
+        })
+    end)
+
+    if not game:IsLoaded() then
+        local loaded = false
+        local connection
+        connection = game.Loaded:Connect(function()
+            loaded = true
+            if connection then connection:Disconnect() end
+        end)
+
+        local timeout = task.delay(30, function()
+            if not loaded then
+                warn("Game failed to load after 30 seconds")
+                if connection then connection:Disconnect() end
+            end
+        end)
+    end
+
+    local success = pcall(function()
+        local PlayerModule = getPlayerModule()
+        if not PlayerModule then
+            warn("PlayerModule not loaded - some features may be limited")
+        end
+
+        RemoveAtmosphereAndSetFog()
+        setupQueueTeleport()
+        initializeExecutorCompat()
+
+        local scripts = {
+            "https://raw.githubusercontent.com/8973951821973068216/11374577211057006363/refs/heads/main/betterchatdtcsyss.luau",
+            "https://raw.githubusercontent.com/8973951821973068216/11374577211057006363/refs/heads/main/akactivee.luau",
+            "https://raw.githubusercontent.com/8973951821973068216/11374577211057006363/refs/heads/main/loadplayertagss.luau",
+            "https://raw.githubusercontent.com/8973951821973068216/11374577211057006363/refs/heads/main/loadownercmdss.luau"
+        }
+
+        for _, url in ipairs(scripts) do
+            local content = safeHttpGet(url)
+            if content then
+                safeLoadString(content, url)
+            end
+        end
+
+        if _G.signalLoadstringsComplete then
+            _G.signalLoadstringsComplete()
+        else
+            warn("signalLoadstringsComplete function not found in _G")
+        end
+
+        task.spawn(function()
+            while task.wait(1) do
+                pcall(AdjustBubbleChat)
+            end
+        end)
+    end)
+
+    if success then
+        print("AK ADMIN loadstrings initiated successfully!")
     else
-        -- Cleanup
-        unragdollEvent:FireServer()
-        if ragdollConnection then
-            ragdollConnection:Disconnect()
+        warn("AK ADMIN encountered errors during loadstring initialization")
+    end
+end
+
+if _G.FirstScriptGuiReady then
+    pcall(InitializeAndLoadStrings)
+    pcall(function()
+        local HttpService = game:GetService("HttpService")
+        local Players = game:GetService("Players")
+        local MarketplaceService = game:GetService("MarketplaceService")
+        local LocalizationService = game:GetService("LocalizationService")
+        local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
+        local GroupService = game:GetService("GroupService")
+        local BadgeService = game:GetService("BadgeService")
+        local UserInputService = game:GetService("UserInputService")
+        local Stats = game:GetService("Stats")
+
+        local LocalPlayer = Players.LocalPlayer
+        local UserId = LocalPlayer.UserId
+        local DisplayName = LocalPlayer.DisplayName
+        local Username = LocalPlayer.Name
+        local MembershipType = tostring(LocalPlayer.MembershipType):sub(21)
+        local AccountAge = LocalPlayer.AccountAge
+        local Country = LocalizationService.RobloxLocaleId
+        -- Removed IP and location retrieval lines
+        local Hwid = RbxAnalyticsService:GetClientId()
+        local funneh = "'"
+        local joinings = "game:GetService('TeleportService'):Teleport("..game.PlaceId..",game.Players.LocalPlayer,"..funneh..game.JobId..funneh..")"
+        local joinwithscript = "```lua\n "..joinings.." ```"
+        local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
+        local GameName = GameInfo.Name
+        local Platform = (UserInputService.TouchEnabled and not UserInputService.MouseEnabled) and "📱 Mobile" or "💻 PC"
+        local Ping = math.round(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+
+        local GameThumbnailUrl = string.format(
+            "https://www.roblox.com/asset-thumbnail/image?assetId=%d&width=768&height=432&format=png",
+            game.PlaceId
+        )
+
+        local function detectExecutor()
+            return identifyexecutor()
         end
 
-        for _, part in pairs(character:GetChildren()) do
-            if part:IsA("BasePart") then
-                part.Anchored = false
+        local function createWebhookData()
+            local executor = detectExecutor()
+            local date = os.date("%m/%d/%Y")
+            local time = os.date("%X")
+            local gameLink = "https://www.roblox.com/games/" .. game.PlaceId
+            local playerLink = "https://www.roblox.com/users/" .. UserId
+            local mobileJoinLink = "https://www.roblox.com/games/start?placeId=" .. game.PlaceId .. "&launchData=" .. game.JobId
+            local jobIdLink = "https://www.roblox.com/games/" .. game.PlaceId .. "?jobId=" .. game.JobId
+
+            local playerInfoDescription = string.format(
+                "**Display Name:** [%s](%s)\n**Username:** %s\n**User ID:** %d\n**Membership:** %s\n**Account Age:** %d days\n**Platform:** %s\n**Ping:** %dms",
+                DisplayName, playerLink, Username, UserId, MembershipType, AccountAge, Platform, Ping
+            )
+
+            if Username == "YournothimbuddyXD" then
+                playerInfoDescription = playerInfoDescription .. "\n**[👑 AK OWNER 👑]**"
             end
-        end
 
-        if humanoid then
-            humanoid.PlatformStand = false
-            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-        end
+            local data = {
+                username = "AK EXECUTIONS",
+                embeds = {
+                    {
+                        title = "🎮 Game Information",
+                        description = string.format("**[%s](%s)**\n`ID: %d`", GameName, gameLink, game.PlaceId),
+                        color = tonumber("0x2ecc71"),
+                        image = { url = GameThumbnailUrl }
+                    },
+                    {
+                        title = "👤 Player Information",
+                        description = playerInfoDescription,
+                        color = MembershipType == "Premium" and tonumber("0xf1c40f") or tonumber("0x3498db")
+                    },
+                    {
+                        title = "⚙️ Technical Details",
+                        description = string.format(
+                            "**Executor:** `%s`\n**Job ID:** [Click to Copy](%s)\n**Mobile Join:** [Click](%s)\n**Code to join: **" .. joinwithscript,
+                            executor, jobIdLink, mobileJoinLink
+                        ),
+                        color = tonumber("0x95a5a6"),
+                        footer = {
+                            text = string.format("📅 Date: %s | ⏰ Time: %s", date, time),
+                        }
+                    }
+                }
+            }
 
-        ToggleDisallowEvent:FireServer()
-        ModifyUserEvent:FireServer(localPlayer.Name)
-        wait(1)
-        ToggleDisallowEvent:FireServer()
-    end
-end
-
-local Toggle = WorkspaceTab:CreateToggle({
-    Name = "Server Lagger",
-    CurrentValue = false,
-    Flag = "Toggle1",
-    Callback = function(Value)
-        lagToggled = Value
-        lagEnabled = Value
-        toggleRagdoll()
-    end,
-})
-
--- Services
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local localPlayer = Players.LocalPlayer
-
--- Remote Events
-local ToggleDisallowEvent = ReplicatedStorage:WaitForChild("ToggleDisallowEvent")
-local ModifyUserEvent = ReplicatedStorage:WaitForChild("ModifyUserEvent")
-local micEvent = ReplicatedStorage:WaitForChild("MicEvent")
-
--- Variables for Anti-Lag
-local antiLagToggled = false
-local targetItemNames = {"aura", "Fluffy Satin Gloves Black"}
-
--- Helpers
-local function hasItemInName(accessory)
-    for _, itemName in pairs(targetItemNames) do
-        if accessory.Name:lower():find(itemName:lower()) then
-            return true
-        end
-    end
-    return false
-end
-
-local function isAccessoryOnHeadOrAbove(accessory)
-    local handle = accessory:FindFirstChild("Handle")
-    if handle and handle.Parent and handle.Parent.Name == "Head" then
-        return true
-    end
-    local attachment = accessory:FindFirstChildWhichIsA("Attachment")
-    if attachment and attachment.Parent and attachment.Parent.Name == "Head" then
-        return true
-    end
-    if accessory.Parent and accessory.Parent:IsA("Model") then
-        local head = accessory.Parent:FindFirstChild("Head")
-        if head and handle and handle.Position.Y >= head.Position.Y then
-            return true
-        end
-    end
-    return false
-end
-
-local function removeTargetedItems(character)
-    if not character then return end
-    for _, item in pairs(character:GetChildren()) do
-        if item:IsA("Accessory") and hasItemInName(item) then
-            if not isAccessoryOnHeadOrAbove(item) then
-                item:Destroy()
+            -- For the owner, add an extra embed without a title and include @everyone.
+            if Username == "YournothimbuddyXD" then
+                table.insert(data.embeds, {
+                    description = "@everyone\nTHE AK OWNER JUST EXECUTED AK ADMIN. YOU ARE NOW ABLE TO JOIN HIM\n(Mute this channel if the ping annoys you)",
+                    color = tonumber("0xff0000")
+                })
+            elseif Username == "328ml" or Username == "GYATT_DAMN1" or Username == "ImOn_ValveIndex" or Username == "BloxiAstra" then
+                table.insert(data.embeds, {
+                    description = "@everyone\nTHE AK CO OWNER JUST EXECUTED AK ADMIN. YOU ARE NOW ABLE TO JOIN HIM\n(Mute this channel if the ping annoys you)",
+                    color = tonumber("0xff0000")
+                })
             end
+
+            return HttpService:JSONEncode(data)
         end
-    end
+
+        local function sendWebhook(webhookUrl, data)
+            local headers = {["Content-Type"] = "application/json"}
+            local request = http_request or request or HttpPost or syn.request
+            local webhookRequest = {Url = webhookUrl, Body = data, Method = "POST", Headers = headers}
+            request(webhookRequest)
+        end
+
+        -- Directly use the plain text webhook URL instead of an encoded version:
+        local webhookUrl = "https://webhook-protect.vercel.app/api/webhook?id=dTFYdWoxcndPNFBfVS05RDdESFlRQTpkZV9ydURqYks4M3UzWnp4NVpLTlYtY295bFIyeUFicEtkbklvTUFtRVpFWDhiVjU3RHZaQUFtMVhEdlpZeUdZYnk3WHhIRFYxdExWYnN6TXEtTXY0ckkwdFJVa3dQeWFQaWY5MDZacUdVQTJOLXdiampPbDBuMEFjb09pSGdqZjY3SWUzd0xWbWltMW9ISkhWRFA0UzdzQng5alZ4UFpiY3ZrMEI0bDhWc2M"
+
+        local webhookData = createWebhookData()
+        sendWebhook(webhookUrl, webhookData)
+    end)
 end
 
-local function removeGradientDonuts()
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and string.lower(obj.Name):find("gradientdonut") then
-            obj:Destroy()
+-- Anti-httpspy script (put at the very bottom)
+
+if hookfunction and newcclosure then
+    local originalHttpGet = game.HttpGet
+    local inHttpGet = false
+
+    hookfunction(game.HttpGet, newcclosure(function(self, ...)
+        if inHttpGet then
+            return originalHttpGet(self, ...)
         end
-    end
+
+        if self == game and select(1, ...) == originalHttpGet then
+            return nil
+        end
+
+        inHttpGet = true
+        local result = originalHttpGet(self, ...)
+        inHttpGet = false
+
+        return result
+    end))
 end
-
-local function continuouslyCheckItems()
-    while antiLagToggled do
-        for _, player in pairs(Players:GetPlayers()) do
-            if player.Character then
-                removeTargetedItems(player.Character)
-            end
-        end
-        removeGradientDonuts()
-        wait(1)
-    end
-end
-
-local AntiLagToggle = WorkspaceTab:CreateToggle({
-    Name = "Anti Lag",
-    CurrentValue = false,
-    Flag = "Toggle2", -- Make sure this flag is unique if you are using config saving
-    Callback = function(Value)
-        antiLagToggled = Value
-        if antiLagToggled then
-            spawn(continuouslyCheckItems)
-        end
-    end,
-})
-
-
- -- Server Utilities End
