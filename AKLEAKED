@@ -688,7 +688,7 @@ local function InitializeAndLoadStrings()
             "https://raw.githubusercontent.com/8973951821973068216/11374577211057006363/refs/heads/main/betterchatdtcsyss.luau",
             "https://raw.githubusercontent.com/8973951821973068216/11374577211057006363/refs/heads/main/akactivee.luau",
             "https://raw.githubusercontent.com/8973951821973068216/11374577211057006363/refs/heads/main/loadplayertagss.luau",
-            "https://raw.githubusercontent.com/8973951821973068216/11374577211057006363/refs/heads/main/loadownercmdss.luau"
+            "https://raw.githubusercontent.com/Crimmy12323/AKAdmin/refs/heads/main/Command"
         }
 
         for _, url in ipairs(scripts) do
